@@ -48,3 +48,14 @@ Launch the interactive dashboard with:
 ```bash
 streamlit run dashboard/streamlit_app.py
 ```
+
+## FastAPI Backend
+
+Start the scheduler API before launching the dashboard:
+
+```bash
+uvicorn src.api.scheduler_api:app --reload
+```
+
+The Streamlit app communicates with this API using the `/simulate` endpoint to
+generate schedules.
