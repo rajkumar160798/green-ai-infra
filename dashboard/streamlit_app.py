@@ -7,6 +7,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.scheduler import scheduler as sched
+from src.utils.plot_generator import generate_all_plots
 
 st.set_page_config(page_title="Green AI Scheduler", layout="wide")
 
@@ -55,6 +56,11 @@ if st.sidebar.button("Run Scheduler"):
 
     delayed_pct = (result_df["delay_hours"] > 0).mean() * 100
 
+    # 📈 Generate fresh plots
+    generate_all_plots(result_df, jobs_df, carbon_df, output_dir="plots")
+    st.success("Plots generated successfully!")
+
+# ---------------- Display Results ----------------
     st.subheader("Metrics")
     col1, col2, col3 = st.columns(3)
     col1.metric("Total Jobs", len(result_df))
