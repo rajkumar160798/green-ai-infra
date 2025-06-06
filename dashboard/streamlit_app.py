@@ -1,6 +1,10 @@
 import os
 import pandas as pd
 import streamlit as st
+import sys
+
+# Ensure the src directory is in the path for imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.scheduler import scheduler as sched
 
