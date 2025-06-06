@@ -70,8 +70,16 @@ if st.sidebar.button("Run Scheduler"):
     carbon_src.close()
 
     if not response.ok:
-        st.error(f"API error: {response.text}")
+        try:
+            response == response.json()
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            st.error(f"Error: {e.response.text}")
+            st.stop()
+    if response.status_code != 200:
+        st.error(f"Error: {response.text}")
         st.stop()
+    st.success("Scheduler executed successfully!")
 
     result_json = response.json()
     result_df = pd.DataFrame(result_json["schedule"])
@@ -81,7 +89,9 @@ if st.sidebar.button("Run Scheduler"):
     st.success(
         "Schedule generated via API and saved to results/execution_schedule.csv"
     )
-
+    # Calculate baseline carbon for jobs
+    carbon_index = carbon_df.set_index("timestamp")["carbon_intensity"]
+    jobs_df["baseline_carbon"] = jobs_df["timestamp"].dt.floor("H").map(carbon_index)
     generate_all_plots(result_df, jobs_df, carbon_df, output_dir="plots")
     st.success("Plots generated successfully!")
 
@@ -107,7 +117,7 @@ if st.sidebar.button("Run Scheduler"):
         "Co2_Baseline_vs_Scheduled.png",
         "carbon_intensity.png",
         "Job_Execution_Delay.png",
-        "energy_souce_breakdown.png",
+        "energy_source_breakdown.png",
         "Job_Timeline.png",
         "job_delay_distribution.png",
         "Solar_Power_Used_Per_Hour.png",

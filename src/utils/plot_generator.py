@@ -62,3 +62,12 @@ def generate_all_plots(result_df: pd.DataFrame, jobs_df: pd.DataFrame, carbon_df
     plt.legend(title="Energy Source")
     plt.savefig(os.path.join(output_dir, "job_execution_delay.png"))
     plt.close()
+    # 7. carbon intensity over time
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(data=carbon_df, x="timestamp", y="carbon_intensity", marker='o')
+    plt.title("Carbon Intensity Over Time")
+    plt.xlabel("Timestamp")
+    plt.ylabel("gCO₂/kWh")
+    plt.xticks(rotation=45)
+    plt.savefig(os.path.join(output_dir, "carbon_intensity_over_time.png"))
+    plt.close()

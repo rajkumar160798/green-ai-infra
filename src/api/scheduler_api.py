@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
 from datetime import datetime
@@ -8,6 +9,14 @@ from datetime import datetime
 from scheduler.scheduler import schedule_jobs, CARBON_PATH, SOLAR_PATH
 
 app = FastAPI(title="Green AI Scheduler API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or restrict to ["https://yourstreamlitapp.cloud"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # In-memory storage for metrics from the latest run
 _last_metrics: dict[str, float] | None = None
