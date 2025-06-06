@@ -3,8 +3,9 @@ from __future__ import annotations
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from pydantic import BaseModel
 import pandas as pd
+from datetime import datetime
 
-from ..scheduler.scheduler import schedule_jobs, CARBON_PATH, SOLAR_PATH
+from scheduler.scheduler import schedule_jobs, CARBON_PATH, SOLAR_PATH
 
 app = FastAPI(title="Green AI Scheduler API")
 
@@ -43,14 +44,18 @@ class Job(BaseModel):
     """Representation of a single inference job."""
 
     job_id: str
-    timestamp: pd.Timestamp
+    timestamp: datetime  # <-- Use datetime, not pd.Timestamp
     expected_power_kwh: float
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 @app.post("/schedule")
 def schedule_endpoint(jobs: list[Job]):
     """Schedule a batch of jobs and return the execution plan."""
     jobs_df = pd.DataFrame([job.dict() for job in jobs])
+    jobs_df["timestamp"] = pd.to_datetime(jobs_df["timestamp"])  # Ensure pandas Timestamps
     carbon_df, solar_df = _load_default_datasets()
 
     result_df = schedule_jobs(carbon_df, solar_df, jobs_df)

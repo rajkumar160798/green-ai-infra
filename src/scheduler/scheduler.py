@@ -7,10 +7,10 @@ SOLAR_KW_PER_JOB = 0.05
 MAX_DELAY_HOURS = 4
 
 # File paths
-CARBON_PATH = 'data/carbon_intensity.csv'
-SOLAR_PATH = 'data/solar_generation.csv'
-JOBS_PATH = 'data/inference_jobs.csv'
-OUTPUT_PATH = 'results/execution_schedule.csv'
+CARBON_PATH = '../data/carbon_intensity.csv'
+SOLAR_PATH = '../data/solar_generation.csv'
+JOBS_PATH = '../data/inference_jobs.csv'
+OUTPUT_PATH = '../results/execution_schedule.csv'
 
 def load_data():
     carbon_df = pd.read_csv(CARBON_PATH, parse_dates=['timestamp'])
@@ -50,6 +50,10 @@ def schedule_jobs(carbon_df, solar_df, jobs_df):
                     break
 
         if not job_run:
+            print(f"⚠️ Job {job['job_id']} could not be scheduled within the delay limit.")
+            # Fallback to the original job time if no suitable delay was found
+            job_time = job['timestamp']
+            # Use the carbon and solar data at the original job time
             fallback_row = carbon_df[carbon_df['timestamp'] == job_time]
             fallback_solar = solar_df[solar_df['timestamp'] == job_time]
             fallback_carbon = fallback_row.iloc[0]['carbon_intensity'] if not fallback_row.empty else -1
