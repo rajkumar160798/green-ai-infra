@@ -2,6 +2,8 @@ import os
 import pandas as pd
 import streamlit as st
 import sys
+import requests
+import io
 
 # Ensure the src directory is in the path for imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -38,34 +40,66 @@ max_delay = st.sidebar.slider("Max Delay Hours", min_value=0, max_value=12, valu
 
 # ---------------- Scheduler Trigger ----------------
 if st.sidebar.button("Run Scheduler"):
-    # override parameters
-    sched.SOLAR_KW_PER_JOB = solar_kw
-    sched.MAX_DELAY_HOURS = max_delay
+    if jobs_file:
+        jobs_file.seek(0)
+        jobs_src = jobs_file
+    else:
+        jobs_src = open("data/inference_jobs.csv", "rb")
 
-    result_df = sched.schedule_jobs(carbon_df, solar_df, jobs_df)
+    if solar_file:
+        solar_file.seek(0)
+        solar_src = solar_file
+    else:
+        solar_src = open("data/solar_generation.csv", "rb")
+
+    carbon_src = open("data/carbon_intensity.csv", "rb")
+
+    response = requests.post(
+        "http://127.0.0.1:8000/simulate",
+        files={"jobs": jobs_src, "solar": solar_src, "carbon": carbon_src},
+    )
+
+    if not isinstance(jobs_file, type(None)):
+        pass
+    else:
+        jobs_src.close()
+    if not isinstance(solar_file, type(None)):
+        pass
+    else:
+        solar_src.close()
+    carbon_src.close()
+
+    if not response.ok:
+        st.error(f"API error: {response.text}")
+        st.stop()
+
+    result_json = response.json()
+    result_df = pd.DataFrame(result_json["schedule"])
+    metrics = result_json.get("metrics", {})
+
     result_df.to_csv("results/execution_schedule.csv", index=False)
-    st.success("Schedule generated and saved to results/execution_schedule.csv")
+    st.success(
+        "Schedule generated via API and saved to results/execution_schedule.csv"
+    )
 
-    # Calculate baseline and scheduled emissions
-    carbon_index = carbon_df.set_index("timestamp")["carbon_intensity"]
-    jobs_df["baseline_carbon"] = jobs_df["timestamp"].dt.floor("H").map(carbon_index)
-    baseline_emissions = (jobs_df["baseline_carbon"] * jobs_df["expected_power_kwh"]).sum()
-    result_df["scheduled_emissions"] = result_df["carbon_intensity"].clip(lower=0) * result_df["power_kwh"]
-    scheduled_emissions = result_df["scheduled_emissions"].sum()
-    savings = baseline_emissions - scheduled_emissions
-
-    delayed_pct = (result_df["delay_hours"] > 0).mean() * 100
-
-    # 📈 Generate fresh plots
     generate_all_plots(result_df, jobs_df, carbon_df, output_dir="plots")
     st.success("Plots generated successfully!")
 
 # ---------------- Display Results ----------------
     st.subheader("Metrics")
     col1, col2, col3 = st.columns(3)
-    col1.metric("Total Jobs", len(result_df))
-    col2.metric("Emissions Saved (gCO2)", f"{savings:.2f}")
-    col3.metric("% Delayed Jobs", f"{delayed_pct:.1f}%")
+    col1.metric("Total Jobs", metrics.get("total_jobs", len(result_df)))
+    col2.metric(
+        "Emissions Saved (gCO2)", f"{metrics.get('emissions_saved', 0):.2f}"
+    )
+    col3.metric("% Delayed Jobs", f"{metrics.get('delayed_pct', 0):.1f}%")
+
+    st.download_button(
+        label="📥 Download Schedule CSV",
+        data=result_df.to_csv(index=False),
+        file_name="green_ai_schedule.csv",
+        mime="text/csv",
+    )
 
     # ---------------- Visualizations ----------------
     st.header("Plots")
