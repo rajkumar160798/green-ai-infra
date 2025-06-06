@@ -30,7 +30,7 @@ green-ai-infra/
 │   └── emissions_analysis.ipynb
 │
 ├── 📁 dashboard/            # Optional frontend (Streamlit/React)
-│   └── app.py               # Streamlit app for results visualization
+│   └── streamlit_app.py     # Streamlit app for results visualization
 │
 ├── 📁 results/              # Output plots and logs
 │   ├── emission_savings.png
@@ -39,4 +39,12 @@ green-ai-infra/
 └── 📁 tests/                # Unit tests (pytest)
     └── test_scheduler.py
 
+```
+
+## Streamlit Dashboard
+
+Launch the interactive dashboard with:
+
+```bash
+streamlit run dashboard/streamlit_app.py
 ```
