@@ -9,3 +9,4 @@ seaborn
 streamlit
 fastapi
 uvicorn
+requests
