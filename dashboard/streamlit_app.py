@@ -57,7 +57,7 @@ if st.sidebar.button("Run Scheduler"):
     carbon_src = open("data/carbon_intensity.csv", "rb")
 
     response = requests.post(
-        "http://127.0.0.1:8000/simulate",
+        "https://green-ai-infra.onrender.com/simulate",
         files={"jobs": jobs_src, "solar": solar_src, "carbon": carbon_src},
     )
 
